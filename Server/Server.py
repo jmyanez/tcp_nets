@@ -51,8 +51,8 @@ class Fwd:
 
         # Actually receive something
     def doRecv(self):
-        b = ""
         try:
+            #if self.file hasnt got anything yet, get the name and read the file
             if not self.file:
                 b = self.inSock.recv(self.bufCap - len(self.buf))
                 self.file = b
@@ -71,15 +71,14 @@ class Fwd:
 # Actually Send something
     def doSend(self):
         try:
+            #Just send the data to the clients
             n=self.outSock.send(self.content)
             self.buf = self.buf[n:]
-            print "self buf is ",self.buf
         except:
-            print "time to die?"
             self.conn.die()
         self.checkDone()
-        # Check if it has finished sending
 
+# Check if it has finished sending
     def checkDone(self):
         if len(self.buf) == 0 and self.inClosed:
             try:

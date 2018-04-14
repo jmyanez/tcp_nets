@@ -1,12 +1,12 @@
 from select import *
 from socket import *
-
+import sys
 import re
 import params
 
 switchesVarDefaults = (
     (('-s', '--server'), 'server', "127.0.0.1:50000"),
-    (('-n', '--numClients'), 'numClients', "1"),
+    (('-n', '--numClients'), 'numClients', "2"),
     (('-d', '--debug'), "debug", False),  # boolean (set if present)
     (('-?', '--usage'), "usage", False)  # boolean (set if present)
 )
@@ -53,7 +53,7 @@ class Client:
     def doSend(self):
         try:
             if self.firstMsg == 0:
-                # Specify what will we send (Request with file name)
+                # Name of requested file
                 self.fileRequest = "File.txt"
                 requestFile = self.fileRequest
                 self.ssock.send(requestFile)
@@ -72,8 +72,10 @@ class Client:
         try:
             recvMessage = self.ssock.recv(1024)
             n = len(recvMessage)
-            with open("myFile.txt","w") as file:
-                file.write(recvMessage)
+            if recvMessage != "":
+                print "i got" , recvMessage
+                with open("myFile.txt","w") as file:
+                    file.write(recvMessage)
 
         except Exception as e:
             print "doRecv on dead socket"
@@ -81,18 +83,12 @@ class Client:
             self.done()
             return
         self.numRecv += n
-        if self.numRecv > self.numSent:
-            print "Eto"
-            self.errorAbort("sent=%d < recd=%d" % (self.numSent, self.numRecv))
         if n != 0:
             return
         if debug: print "client %d: zero length read" % self.clientIndex
         # zero length read (done)ddd
-        if self.numRecv == self.numSent:
-            self.done()
         else:
-            print"Nah eto"
-            self.errorAbort("sent=%d but recd=%d" % (self.numSent, self.numRecv))
+            self.done()
 
     def doErr(self, msg=""):
         error("socket error")
@@ -112,7 +108,7 @@ class Client:
     def done(self):
         self.isDone = 1
         self.allSent = 1
-        if self.numSent != self.numRecv: self.error = 1
+
         try:
             self.ssock(close)
         except:
